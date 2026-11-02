@@ -1,0 +1,95 @@
+name: symfony-php
+type: service
+from: php
+guidance: GUIDANCE.md
+fromVersionConstraint: "^3.0.0"
+fromVersion: "3.2.4"
+icon: symfony
+title: PHP (Symfony)
+
+labels:
+- symfony
+
+links:
+# Doctrine reads the whole connection from DATABASE_URL. The PHP service's DB_*
+# variables, including DB_SSL_CA, stay available.
+- name: db
+  env:
+  - name: DATABASE_URL
+    value: '{{link.database.url}}'
+    secret: true
+# Symfony Mailer's transport. The PHP service's MSMTP_* variables keep PHP's
+# mail() working too.
+- name: sendmail
+  env:
+  - name: MAILER_DSN
+    value: 'smtp://{{link.host}}:{{link.port}}'
+
+env:
+- name: APP_SECRET
+  value: '{{app_secret}}'
+  secret: true
+- name: APP_ENV
+  value: dev
+  envType: dev
+- name: APP_ENV
+  value: prod
+  envType: prod
+- name: APP_ENV
+  value: prod
+  envType: staging
+- name: APP_ENV
+  value: prod
+  envType: test
+- name: APP_ENV
+  value: prod
+  envType: feature
+# Requests reach PHP-FPM through Nginx and the cluster's gateway, both on
+# private addresses. Symfony 7.2 and newer read these variables by itself.
+- name: SYMFONY_TRUSTED_PROXIES
+  value: PRIVATE_SUBNETS
+- name: SYMFONY_TRUSTED_HEADERS
+  value: x-forwarded-for,x-forwarded-proto,x-forwarded-port
+# Symfony writes its cache to var/ in the checkout at runtime, and console
+# commands such as migrations run as the checkout's owner. PHP-FPM runs as the
+# same user so both can rebuild and clear that cache.
+- name: PHP_FPM_USER
+  value: wodby
+
+tokens:
+- name: app_secret
+  generate:
+    regex: '[0-9a-f]{64}'
+
+build:
+  connect: true
+  boilerplates:
+  - name: symfony
+    title: Symfony on Wodby
+    repo: https://github.com/wodby/symfony-boilerplate
+    branch: main
+    optionVersionConstraint: "^8.4"
+
+actions:
+- name: database_migrate
+  title: Run migrations
+  args:
+  - php
+  - bin/console
+  - doctrine:migrations:migrate
+  - --no-interaction
+  # The first deployment has no migrations yet.
+  - --allow-no-migration
+  type: post_deploy
+
+# Workspace deployments skip post-deployment actions, so preparation applies
+# the migrations after the PHP service installs dependencies.
+workspace:
+  preparation:
+  - name: database
+    command:
+    - /bin/sh
+    - -eu
+    - -c
+    - 'if php bin/console list doctrine:migrations --raw >/dev/null 2>&1; then php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration; fi'
+    timeoutSeconds: 600
