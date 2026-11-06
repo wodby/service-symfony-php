@@ -3,7 +3,7 @@ type: service
 from: php
 guidance: GUIDANCE.md
 fromVersionConstraint: "^3.0.0"
-fromVersion: "3.3.0"
+fromVersion: "3.3.1"
 title: PHP (Symfony)
 
 labels:
@@ -90,5 +90,7 @@ workspace:
     - /bin/sh
     - -eu
     - -c
-    - 'if php bin/console list doctrine:migrations --raw >/dev/null 2>&1; then php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration; fi'
+    - 'if php bin/console list doctrine:migrations --raw >/dev/null 2>&1; then php
+      bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration;
+      fi'
     timeoutSeconds: 600
