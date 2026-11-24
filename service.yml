@@ -70,6 +70,8 @@ build:
     optionVersionConstraint: "^8.4"
 
 actions:
+# Runs before the new version rolls out, while the previous version keeps
+# serving, so migrations must keep working with the previous version.
 - name: database_migrate
   title: Run migrations
   args:
@@ -79,7 +81,7 @@ actions:
   - --no-interaction
   # The first deployment has no migrations yet.
   - --allow-no-migration
-  type: post_deploy
+  type: pre_deploy
 
 # Workspace deployments skip post-deployment actions, so preparation applies
 # the migrations after the PHP service installs dependencies.

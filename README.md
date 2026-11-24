@@ -33,7 +33,7 @@ build configuration and Wodby CI:
 | Service links | Database and mail, optional, with `DATABASE_URL` and `MAILER_DSN` |
 | Application build | Git source connection enabled; boilerplates: Symfony on Wodby |
 | Configuration | 1 generated token (`APP_SECRET`) |
-| Operations | 1 post-deployment action (Doctrine migrations) |
+| Operations | 1 pre-rollout action (Doctrine migrations) |
 | Development workspace | Inherited from `php`, with migrations during setup |
 
 The Wodby Symfony boilerplate requires PHP `^8.4`. PHP 8.2 and 8.3 remain
