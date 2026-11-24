@@ -32,9 +32,9 @@ Without a mail link `MAILER_DSN` is absent and the `.env` default applies.
 
 The PHP service's Dockerfile copies the code into `/var/www/html`. The boilerplate's pipeline runs `composer install` with development packages, because an environment of type `dev` runs the same image with the dev bundles enabled. The runtime variables and the database are not available during the build: do not warm the `prod` cache there.
 
-## After a deployment
+## Migrations
 
-`php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration` runs after every deployment of the service. The start command and the pipeline do not have to run migrations. The action fails when the application does not have Doctrine Migrations.
+`php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration` runs on every deployment of the service, in a job of the new version, before its pods are replaced. On the first deployment it runs right after the install. If it fails, the deployment stops before the rollout. The previous version keeps serving until the new one is ready, and keeps serving if the deployment fails, so migrations must keep working with the previous version: add columns and tables first, remove or rename them in a later release. The start command and the pipeline do not have to run migrations. The action fails when the application does not have Doctrine Migrations.
 
 ## Files and sessions
 
@@ -47,7 +47,7 @@ Use it with the `php-nginx` service, whose document root defaults to `public`, S
 ## In a development workspace
 
 - The PHP service's workspace applies: the checkout is served as it is on disk, and `composer install` runs during setup.
-- Workspace deployments do not run post-deployment actions. Setup runs the migrations after installing dependencies when the application has Doctrine Migrations; run `php bin/console doctrine:migrations:migrate` yourself after adding one.
+- Workspace deployments do not run deployment actions. Setup runs the migrations after installing dependencies when the application has Doctrine Migrations; run `php bin/console doctrine:migrations:migrate` yourself after adding one.
 - With `APP_ENV=dev` Symfony rebuilds its container when configuration or code changes; run `php bin/console cache:clear` after changing environment variables.
 
 ## Check the result
